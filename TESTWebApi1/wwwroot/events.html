@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>List of events</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="form_all_styled">
+        <form name="eventForm">
+            <input type="hidden" name="id" value="0" />
+            <div class="mb-3">
+                <label class="form-label" for="name">Name:</label>
+                <input class="form-control" name="name" />
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label>
+                <input class="form-control" name="description" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="speaker">Speaker:</label>
+                <input class="form-control" name="speaker" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="location">Location:</label>
+                <input class="form-control" name="location" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="dateTime">DateTime:</label>
+                <input class="form-control" name="dateTime" type="date" />
+            </div>
+
+            <div class="buttons_wrapper">
+                <button type="submit" class="button-os">Save</button>
+
+            </div>
+        </form>
+
+        <div class="buttons_wrapper">
+
+            <button class="button-os"><a id="reset">Clear form</a></button>
+            <button onclick="getEvents()" class="button-os">All events</button>
+            <button onclick="getEvent(Number(document.getElementById('eventId').value), true)" class="button-os">Search by ID</button>
+
+        </div>
+        <form>
+            <p>Enter ID to find event:</p>
+            <input type="number" id="eventId" class="form-control">
+        </form>
+    </div>
+    <div class="table_wrapper">
+        <table class="table table-condensed table-striped table-bordered">
+            <thead><tr><th>Name</th><th>Description</th><th>Speaker</th><th>Location</th><th>DateTime</th><th></th></tr></thead>
+            <tbody id="events_table">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+
+        async function getEvents() {
+            const response = await fetch("/api/events", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+
+            if (response.ok === true) {
+
+                const events = await response.json();
+                const rows = document.querySelector("tbody");
+
+                events.forEach(event_use => rows.append(row(event_use)));
+            }
+        }
+        async function getEvent(id, isTable) {
+            reset();
+            const response = await fetch("/api/events/" + id, {
+                method: "GET",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" }
+            });
+            if (response.ok === true && isTable) {
+                resetTable();
+                const event = await response.json();
+                const rows = document.querySelector("tbody");
+                rows.append(row(event));
+            } else if (response.ok === true && !isTable) {
+                const event = await response.json();
+                console.log(event.id);
+                const form = document.forms["eventForm"];
+                form.elements["id"].value = event.id;
+                form.elements["name"].value = event.name;
+                form.elements["description"].value = event.description;
+                form.elements["speaker"].value = event.speaker;
+                form.elements["location"].value = event.location;
+                form.elements["dateTime"].value = event.dateTime;
+            }
+            else {
+
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+
+        async function createEvent(eventName, eventDescription, eventSpeaker, eventLocation, eventDatatime) {
+
+            const response = await fetch("api/events", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json", "authorization": localStorage.getItem("token") },
+                body: JSON.stringify({
+                    name: eventName,
+                    description: eventDescription,
+                    speaker: eventSpeaker,
+                    location: eventLocation,
+                    dateTime: eventDatatime
+                })
+            });
+            if (response.ok === true) {
+                const event_use = await response.json();
+                reset();
+                //document.querySelector("tbody").append(row(event_use));
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+
+
+        async function editEvent(eventId, eventName, eventDescription, eventSpeaker, eventLocation, eventDatatime) {
+            const response = await fetch("api/events", {
+                method: "PUT",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: eventId,
+                    name: eventName,
+                    description: eventDescription,
+                    speaker: eventSpeaker,
+                    location: eventLocation,
+                    dateTime: eventDatatime
+                })
+            });
+            if (response.ok === true) {
+                const event_use = await response.json();
+                reset();
+                document.querySelector("tr[data-rowid='" + event_use.id + "']").replaceWith(row(event_use));
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+        async function deleteUser(id) {
+            const response = await fetch("/api/events/" + id, {
+                method: "DELETE",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const event_use = await response.json();
+                document.querySelector("tr[data-rowid='" + event_use.id + "']").remove();
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+
+        function reset() {
+            const form = document.forms["eventForm"];
+            form.reset();
+            form.elements["id"].value = 0;
+        }
+
+        function row(event_use) {
+
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-rowid", event_use.id);
+
+            const nameTd = document.createElement("td");
+            nameTd.append(event_use.name);
+            tr.append(nameTd);
+
+            const descriptionTd = document.createElement("td");
+            descriptionTd.append(event_use.description);
+            tr.append(descriptionTd);
+
+            const speakerTd = document.createElement("td");
+            speakerTd.append(event_use.speaker);
+            tr.append(speakerTd);
+
+            const locationTd = document.createElement("td");
+            locationTd.append(event_use.location);
+            tr.append(locationTd);
+
+            const dateTimeTd = document.createElement("td");
+            dateTimeTd.append(event_use.dateTime);
+            tr.append(dateTimeTd);
+
+            const linksTd = document.createElement("td");
+
+            const editLink = document.createElement("a");
+            editLink.setAttribute("style", "cursor:pointer;padding:15px;");
+            editLink.append("Change");
+            editLink.addEventListener("click", e => {
+
+                e.preventDefault();
+                getEvent(event_use.id, false);
+            });
+            linksTd.append(editLink);
+
+            const removeLink = document.createElement("a");
+            removeLink.setAttribute("style", "cursor:pointer;padding:15px;");
+            removeLink.append("Delete");
+            removeLink.addEventListener("click", e => {
+
+                e.preventDefault();
+                deleteUser(event_use.id);
+            });
+
+            linksTd.append(removeLink);
+            tr.appendChild(linksTd);
+
+            return tr;
+        }
+
+        function resetTable() {
+            const table = document.getElementById("events_table");
+            console.log(table);
+            table.innerHTML = "";
+        }
+
+        document.getElementById("reset").addEventListener("click", e => {
+
+            e.preventDefault();
+            reset();
+        })
+
+        document.forms["eventForm"].addEventListener("submit", e => {
+            e.preventDefault();
+            const form = document.forms["eventForm"];
+            const id = form.elements["id"].value;
+            const name = form.elements["name"].value;
+            const description = form.elements["description"].value;
+            const speaker = form.elements["speaker"].value;
+            const location = form.elements["location"].value;
+            const dateTime = form.elements["dateTime"].value;
+            if (id == 0)
+                createEvent(name, description, speaker, location, dateTime);
+            else
+                editEvent(id, name, description, speaker, location, dateTime);
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="logo_name"><h1>List of Events</h1></div>
+    <div class="column_page_wrapper">
+        <h1>Login</h1>
+        <div class="mb-3">
+            <label for="login" class="form-label">Login:</label>
+            <input class="form-control" name="login" id="login" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="password">Password:</label>
+            <input class="form-control" name="password" id="password" />
+        </div> <div class="buttons_wrapper">
+            <button onclick="getUser()" class="button-os">Log in</button>
+        </div>
+    </div>
+
+    <script>
+
+        var tokenKey = "accessToken";
+        ////// при нажатии на кнопку отправки формы идет запрос к /login для получения токена
+        //document.getElementById("getData").addEventListener("click", async e => {
+        //    e.preventDefault();
+        //    // отправляет запрос и получаем ответ
+        //    const response = await fetch("/api/tokens" + login, {
+        //        method: "POST",
+        //        headers: { "Accept": "application/json", "Content-Type": "application/json" },
+        //        body: JSON.stringify({
+        //            login: document.getElementById("login").value,
+        //            password: document.getElementById("password").value
+        //        })
+        //    });
+        //    // если запрос прошел нормально
+        //    if (response.ok === true) {
+        //        // получаем данные
+        //        const data = await response.json();
+        //        // изменяем содержимое и видимость блоков на странице
+        //        document.getElementById("login").innerText = data.login;
+        //        //document.getElementById("userInfo").style.display = "block";
+        //        document.getElementById("log_in").style.display = "none";
+        //        // сохраняем в хранилище sessionStorage токен доступа
+        //        sessionStorage.setItem(tokenKey, data.access_token);
+        //        //window.location.href = "auth.html";
+        //    }
+        //    else  // если произошла ошибка, получаем код статуса
+        //        console.log("Status: ", response.status);
+
+        //});
+
+        //// кнопка для обращения по пути "/data" для получения данных
+        //document.getElementById("getData").addEventListener("click", async e => {
+        //    e.preventDefault();
+        //    // получаем токен из sessionStorage
+        //    const token = sessionStorage.getItem(tokenKey);
+        //    // отправляем запрос к "/data
+        //    const response = await fetch("/data", {
+        //        method: "GET",
+        //        headers: {
+        //            "Accept": "application/json",
+        //            "Authorization": "Bearer " + token  // передача токена в заголовке
+        //        }
+        //    });
+
+        //    if (response.ok === true) {
+        //        const data = await response.json();
+        //        alert(data.message);
+
+        //    }
+        //    else
+        //        console.log("Status: ", response.status);
+        //});
+
+        //// условный выход - просто удаляем токен и меняем видимость блоков
+        //document.getElementById("logOut").addEventListener("click", e => {
+
+        //    e.preventDefault();
+        //    document.getElementById("userName").innerText = "";
+        //    document.getElementById("userInfo").style.display = "none";
+        //    document.getElementById("loginForm").style.display = "block";
+        //    sessionStorage.removeItem(tokenKey);
+        //});
+        async function getUser() {
+            const login = document.getElementById("login").value;
+            const password = document.getElementById("password").value;
+            const response = await fetch("/api/tokens/" + login, {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json", "Content-Type": "application/json"
+                }
+            });
+            if (response.ok === true) {
+                const user = await response.json();
+                console.log(user.access_token);
+                localStorage.setItem("token", user.access_token);
+                window.location.href = "events.html";
+
+            }
+            else {
+
+                const error = await response.json;
+                console.log(error.message);
+            }
+        }
+    </script>
+</body>
+</html>
